@@ -10,6 +10,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -143,9 +144,11 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
                         Log.d(TAG, "Data changed left : " + value.left);
                         Log.d(TAG, "Data changed right : " + value.right);
                         Log.d(TAG, "Data changed AVG : " + value.avg);
+
                         txtValue.setText(String.format("%.4f", value.right));
                         txtValue2.setText(String.format("%.4f", value.left));
                         txtAvg.setText(String.format("%.2f", value.avg));
+
                         if (value.avg > 0.25 && dzLevelCount <= 50) {
                             dzLevelCount = dzLevelCount + 1;
                         }
@@ -157,6 +160,9 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
                         }
                         else if (dzLevelCount > -30) {
                             txtSleepLevel.setText(R.string.level_2);
+                            // 일단 2단계에서만 audio가 발생하도록 설정해두었음.
+                            // 이미 다른 파일에서 테스트해봐서 문제는 없을것으로 예상됨.
+                            playAudio();
                         }
                         else {
                             txtSleepLevel.setText(R.string.level_3);
@@ -191,6 +197,31 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
             txtChkConnRes.setText(getString(R.string.ConnectionResponse, "idle"));
 
 
+        }
+    }
+
+    // playAudio --> 알람 발생을 위한 함수
+    // 이후 다른 비슷한 형식의 다른 함수들을 추가해서 알람 발생 가능
+    MediaPlayer player;
+    public void playAudio() {
+        try {
+            closePlayer();
+            player = MediaPlayer.create(this, R.raw.test1);
+            player.start();
+            player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    closePlayer();
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void closePlayer() {
+        if (player != null) {
+            player.release();
+            player = null;
         }
     }
 
