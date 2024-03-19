@@ -54,6 +54,7 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
             txtBitrate, txtSleepLevel, txtSleepStat;
     private String currentDateAndTime = "";
     private SurfaceView surfaceView;
+    private boolean isPlayingAudio = false;
 
     private DatabaseReference DBReference;
     //private DatabaseReference DBRefData;
@@ -141,6 +142,7 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
                         // **********************************************************
                         // **********************************************************
                         // **********************************************************
+
                         Log.d(TAG, "Data changed left : " + value.left);
                         Log.d(TAG, "Data changed right : " + value.right);
                         Log.d(TAG, "Data changed AVG : " + value.avg);
@@ -155,6 +157,9 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
                         else if (value.avg <= 0.25 && dzLevelCount >= -50){
                             dzLevelCount = dzLevelCount - 1;
                         }
+                        if (isPlayingAudio) {
+                            return;
+                        }
                         if (dzLevelCount > 0) {
                             txtSleepLevel.setText(R.string.level_1);
                         }
@@ -162,10 +167,17 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
                             txtSleepLevel.setText(R.string.level_2);
                             // 일단 2단계에서만 audio가 발생하도록 설정해두었음.
                             // 이미 다른 파일에서 테스트해봐서 문제는 없을것으로 예상됨.
-                            playAudio();
+                            if (!isPlayingAudio) {
+                                isPlayingAudio = true;
+                                playAudio1();
+                            }
                         }
                         else {
                             txtSleepLevel.setText(R.string.level_3);
+                            if (!isPlayingAudio) {
+                                isPlayingAudio = true;
+                                playAudio2();
+                            }
                         }
                         txtSleepStat.setText(getString(R.string.sleepStat, dzLevelCount));
                     }
@@ -203,10 +215,25 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
     // playAudio --> 알람 발생을 위한 함수
     // 이후 다른 비슷한 형식의 다른 함수들을 추가해서 알람 발생 가능
     MediaPlayer player;
-    public void playAudio() {
+    public void playAudio1() {
         try {
             closePlayer();
             player = MediaPlayer.create(this, R.raw.test1);
+            player.start();
+            player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    closePlayer();
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void playAudio2() {
+        try {
+            closePlayer();
+            player = MediaPlayer.create(this, R.raw.test2);
             player.start();
             player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
@@ -222,6 +249,7 @@ public class CameraStreamActivity extends AppCompatActivity implements ConnectCh
         if (player != null) {
             player.release();
             player = null;
+            isPlayingAudio = false;
         }
     }
 
